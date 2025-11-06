@@ -1,0 +1,16 @@
+<!doctype html>
+<html>
+
+<head>
+    <script type="text/javascript" src="url_check.js"></script>
+    <title>Task: Asynchrone Prüfung bei Eingabe</title>
+</head>
+
+<body>
+    <input id="input_url" name="input_url" oninput="validateURL()" />
+	<p id="validator_result">Bitte URL eingeben!</p>
+	<button type="button" id="input_btn" name="input_btn" onclick="remoteCheckURL()">URL überprüfen</button>
+	<p id="remote_check_result"></p>
+</body>
+
+</html>
