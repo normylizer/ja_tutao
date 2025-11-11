@@ -2,7 +2,7 @@
 // Thema: Inline URL Überprüfung in JavaScript
 // Datum: 2025-11-04
 //
-// Version: 0.0.3 [PoC]
+// Version: 0.0.4 [PoC]
 
 
 // Konstanten
@@ -74,8 +74,11 @@ function remoteCheckURL() {
 // Der eigentliche Remote call
 function ajaxRequest() {
 
-	// Abbruchbedingung: Eingabe ist keine gültige URL (mehr)
-	if (isValidURL == false) { return; }
+	// Abbruchbedingung: Eingabe ist keine valide URL (mehr)
+	if (isValidURL == false) {
+		document.getElementById("remote_check_result").innerHTML = "Request abgebrochen. Es ist keine valide URL (mehr) eingetragen."
+		return;
+	}
 
     // So könnte ein AJAX-Request aussehen:
     /**********************************************
