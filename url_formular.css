@@ -1,0 +1,88 @@
+html * {
+    font-family: Helvetica, Arial, sans-serif;
+}
+
+body {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    background-color: #fff9f5;
+    color: #860122;
+}
+
+/* Kontext-Info */
+
+#context_info_container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 500px;
+    height: 50px;
+    margin-bottom: 5px;
+}
+
+#context_info {
+    position: absolute;
+    bottom: 0px;
+}
+
+/* Lookup-Leiste */
+
+#lookup_input {
+    overflow: hidden;
+    backdrop-filter: blur(2px);
+    border-radius: 30px;
+    box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.2);
+}
+
+#input_url {
+    width: 500px;
+}
+
+#lookup-icon {
+    position: absolute;
+    width: 36px;
+    height: 36px;
+    top: 18px;
+    right: 20px;
+    background-image: url('media/magnifier.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+input[type=text] {
+    padding: 9px;
+    border: none;
+    margin: 16px 65px 16px 14px;
+    font-size: 18px;
+    text-align: left;
+    text-indent: 8px;
+    background-color: transparent;
+    outline: none;
+}
+
+/* Input response */
+
+.input_indifferent {
+    background-color: whitesmoke;
+}
+
+.input_faulty {
+    background-color:lightpink;
+}
+
+.input_good {
+    background-color: lightgreen;
+}
+
+/* Server-Rückmeldung */
+
+#check_result_container {
+    height: 50px;
+    margin-top: 15px;
+}

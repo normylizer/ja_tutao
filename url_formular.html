@@ -2,15 +2,23 @@
 <html>
 
 <head>
+    <link rel="stylesheet" href="url_formular.css" />
     <script type="text/javascript" src="url_check.js"></script>
     <title>Task: Asynchrone Prüfung bei Eingabe</title>
 </head>
 
 <body>
-    <input id="input_url" name="input_url" oninput="validateURL()" />
-	<p id="validator_result">Bitte URL eingeben!</p>
-	<button type="button" id="input_btn" name="input_btn" onclick="remoteCheckURL()">URL überprüfen</button>
-	<p id="remote_check_result"></p>
+    <h2>Remote URL-Überprüfung</h2>
+    <div id="context_info_container">
+        <span id="context_info"></span>
+    </div>
+    <div id="lookup_input" class="input_indifferent">
+        <input type="text" id="input_url" name="input_url" placeholder="Bitte URL eingeben..." oninput="InputHandler()" />
+        <span id="lookup-icon"></span>
+    </div>
+    <div id="check_result_container">
+        <span id="check_result"></span>
+    </div>
 </body>
 
 </html>
