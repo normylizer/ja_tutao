@@ -30,28 +30,21 @@ const settings = {
 
 const InputLogic = {
 	// Clientseitige Validierung
-	// Kriterien: - input darf nicht leer sein
-	//            - input darf nicht länger als in den Settings angegeben sein
-	//            - input muss dem angegebenen RegEx entsprechen
-	isNotEmpty: function(input) {
-		ErrorHandler.Report(2,"Leere Eingabe");
-		return (input);
-	},
-	isValidLength: function(input) {
-		ErrorHandler.Report(2,"Eingabe zu lang. Es sind maximal " + settings.maxInputLength + " Zeichen erlaubt.");
-		// OFI: Eingabe technisch verkürzen?
-		return (input.length <= settings.maxInputLength);
-	},
-	isValidURL: function(input) {
-		ErrorHandler.Report(2,"Das ist keine gültige URL.");
-		const urlRegEx = settings.urlRegEx;
-		return input.match(urlRegEx);
-	},
 	isValid(input) {
-		if (this.isNotEmpty(input) && this.isValidLength(input) && this.isValidURL(input)) {
-			ErrorHandler.Report(1,"Gültige Eingabe!")
-			return true;
+		try {
+			// input darf nicht leer sein
+			if (input.trim() == "") throw "leer";
+			// input darf nicht länger als in den Settings angegeben sein
+			if (input.length > settings.maxInputLength) throw "zu lang";
+			// input muss dem angegebenen RegEx entsprechen
+			if (!input.match(settings.urlRegEx)) throw "keine valide URL"
 		}
+		catch (err) {
+			ErrorHandler.Report(2,"Die Eingabe ist " + err);
+			return(false);
+		}
+		ErrorHandler.Report(1,"Gültige Eingabe!")
+		return true;
 	},
 
 	// Gated Getter
@@ -136,13 +129,16 @@ const FrontendConnector = {
 
 // Konnektor zur standardisierten Interaktion mit dem Remote-Server.
 // "Echte" Klasse, um statische Variablen nutzen zu können.
+// "Künstliches" Singleton. Object.freeze() würde die Nutzung statischer Variablen verhindern.
 class RemoteConnectorEnv {
 	static requestString = "";
 	static lastString = "";
 	static lastRequest = 0;
 	static pendingRequest = false;
 
-	constructor(){}
+	constructor(){
+		// ToDo: Singleton sicherstellen
+	}
 
 	// Setter
 	SetRequestString(userInput){ this.requestString = userInput; }
@@ -158,7 +154,10 @@ class RemoteConnectorEnv {
 
 	// Der eigentliche Request
 	ServerRequest(){
-	    // So könnte ein AJAX-Request aussehen:
+		// Klasse nicht korrekt initialisiert
+		if (!RemoteConnector) { return; }
+
+		// So könnte ein AJAX-Request aussehen:
 	    /**********************************************
 	    let xhttp = new XMLHttpRequest();
 		// ToDo: Payload this.requestString vorbereiten
@@ -169,6 +168,10 @@ class RemoteConnectorEnv {
 		xhttp.send();
     	***********************************************/
 
+		// ToDo: Exceptions
+		// -> Server nicht erreichbar (Retry)
+		// -> Anfrage an den Server gestellt, aber keine Antwort erhalten (Timeout, Retry)
+		// -> Ungültige Antwort vom Server erhalten (Retry)
 
 		// Was tatsächlich geschah
 		let antwortNummer = Math.floor(Math.random() * settings.serverResponseText.length);
@@ -181,8 +184,11 @@ class RemoteConnectorEnv {
 		return responseText;
 	}
 	Check(userInput){
+		// Klasse nicht korrekt initialisiert
+		if (!RemoteConnector) { return; }
+
 		let currentRequest = Date.now();
-		let currentDelay = currentRequest - this.lastRequest;
+		let currentDelay = currentRequest - RemoteConnector.GetLastRequest();
 
 		// Lemma: userInput ist bei Aufruf von Check() validiert
 		// Der alte userInput wird verworfen, er ist nicht mehr interessant
@@ -207,6 +213,7 @@ class RemoteConnectorEnv {
 		}
 	}
 }
+// Singleton initialisieren
 const RemoteConnector = new RemoteConnectorEnv();
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
