@@ -2,7 +2,7 @@
 // Thema: Inline URL Überprüfung in JavaScript
 // Datum: 2025-11-18
 //
-// Version: 0.1.3 [indev]
+// Version: 0.2.0 [indev]
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Init
@@ -10,6 +10,7 @@
 // Einstellungen
 const settings = {
 	urlRegEx: /(^$|((http(s))?:\/\/)([\w-]+\.)+[\w-]+([\w- ;,.\/?%&=]*))/,  // Quelle: https://regex101.com/r/kM8eW3/1
+	inputDelay: 500, // ms
 	checkDelay: 2000,  // ms  -> Proof of Concept: 2000 (2 Sekunden) | Produktiv: 15 (400 Anschläge/Minute)
 	maxInputLength: 2048,  // http://www.sitemaps.org/protocol.html
 
@@ -58,6 +59,15 @@ class InputLogic {
 		}
 		// Rückgabe bereinigt und getrimmt
 		return fc.GetUserInput().replace(/[&<>"']/g, function(m) { return map[m]; }).trim();
+	}
+
+	// Input throttling
+	InputThrottle = function(callback) {
+  		let timeoutId;
+		clearTimeout(timeoutId);
+		timeoutId = setTimeout(() => {
+			callback.apply(this);
+   		}, settings.inputDelay);
 	}
 
 	// Gated Check
@@ -207,13 +217,15 @@ const rc = new RemoteConnector();
 
 // Entry Point: InputHandler()
 function InputHandler(){
-	// Vorarbeit: Bereinigte Benutzereingabe aus dem Frontend holen
-	let userInput = fc.GetUserInput();
+	il.InputThrottle((e) => {
+		// Vorarbeit: Bereinigte Benutzereingabe aus dem Frontend holen
+		let userInput = fc.GetUserInput();
 
-	// Aufgabe 1: Clientseitige Validitätsprüfung
-	if (il.isValid(userInput)) {
+		// Aufgabe 1: Clientseitige Validitätsprüfung
+		if (il.isValid(userInput)) {
 
-		// Aufgabe 2: Remote request
-		il.Check(userInput);
-	}
+			// Aufgabe 2: Remote request
+			il.Check(userInput);
+		}
+	});
 }
