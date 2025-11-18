@@ -1,8 +1,8 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Thema: Inline URL Überprüfung in JavaScript
-// Datum: 2025-11-12
+// Datum: 2025-11-18
 //
-// Version: 0.1.0 [indev]
+// Version: 0.1.2 [indev]
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Init
@@ -24,31 +24,30 @@ const settings = {
 	]
 }
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Business-Logik
 
-const InputLogic = {
+class InputLogic {
 	// Clientseitige Validierung
-	isValid(input) {
+	isValid = function(input) {
 		try {
 			// input darf nicht leer sein
-			if (input.trim() == "") throw "leer";
+			if (input == "") throw "leer";
 			// input darf nicht länger als in den Settings angegeben sein
 			if (input.length > settings.maxInputLength) throw "zu lang";
 			// input muss dem angegebenen RegEx entsprechen
 			if (!input.match(settings.urlRegEx)) throw "keine valide URL"
 		}
 		catch (err) {
-			ErrorHandler.Report(2,"Die Eingabe ist " + err);
+			mh.Report(2,"Die Eingabe ist " + err);
 			return(false);
 		}
-		ErrorHandler.Report(1,"Gültige Eingabe!")
+		mh.Report(1,"Gültige Eingabe!")
 		return true;
-	},
+	}
 
 	// Gated Getter
-	GetUserInput() {
+	GetUserInput = function() {
 		// Rudimentäres htmlspecialchars(), um Code Injection zu verhindern
 		let escapeMap = {
 			'&': '&amp;',
@@ -57,31 +56,28 @@ const InputLogic = {
 			'"': '&quot;',
 			"'": '&#039;'
 		}
-		return FrontendConnector.GetUserInput().replace(/[&<>"']/g, function(m) { return map[m]; });
-	},
+		// Rückgabe bereinigt und getrimmt
+		return fc.GetUserInput().replace(/[&<>"']/g, function(m) { return map[m]; }).trim();
+	}
 
 	// Gated Check
-	Check(userInput) {
+	Check = function(userInput) {
 		// Der RemoteConnector verwaltet die Anfragen selbst. Er übergibt bei Antwort an Report().
-		RemoteConnector.Check(userInput);
-	},
+		rc.Check(userInput);
+	}
 
 	// Response handling
-	Report(checkResult) {
-		FrontendConnector.SetCheckResult(checkResult);
+	Report = function(checkResult) {
+		fc.SetCheckResult(checkResult);
 	}
 }
 
 // Steuerung der Rückmeldungen an den Nutzer
 // Roadmap UX: Verzögerung in die Rückmeldung für eine sanftere UX
-const ErrorHandler = {
-	Report: function(errorLevel,errorMessage){
-		FrontendConnector.SetErrorLevel(errorLevel);
-		FrontendConnector.SetContextInfo(errorMessage);
-	},
-	Clear: function(){
-		FrontendConnector.ClearErrorLevel();
-		FrontendConnector.ClearContextInfo();
+class MessageHandler {
+	Report = function(errorLevel,errorMessage){
+		fc.SetErrorLevel(errorLevel);
+		fc.SetContextInfo(errorMessage);
 	}
 }
 
@@ -91,71 +87,57 @@ const ErrorHandler = {
 
 // Konnektor zur standardisierten Interaktion mit dem Frontend. Alle Interaktionen mit dem DOM erfolgen hier.
 // Erfüllt Aufgabe 1: Clientseitige Validierung
-const FrontendConnector = {
+class FrontendConnector {
 	// Setter
-	SetErrorLevel: function(errorLevel){
+	SetErrorLevel = function(errorLevel){
 		switch(errorLevel) {
+			default:
+			case 0:
+				document.getElementById("lookup_input").className = "input_indifferent";
+				break;
 			case 1:
 				document.getElementById("lookup_input").className = "input_good";
 				break;
 			case 2:
 				document.getElementById("lookup_input").className = "input_faulty";
-				break;
-			case 0:
-			default:
-				document.getElementById("lookup_input").className = "input_indifferent";
 		}
-	},
-	SetContextInfo: function(message){
+	}
+	SetContextInfo = function(message){
 		document.getElementById("context_info").textContent = message;
-	},
-	SetCheckResult: function(message){
+	}
+	SetCheckResult = function(message){
 		document.getElementById("check_result").textContent = message;
-	},
+	}
 
 	// Getter
-	GetUserInput: function(){
+	GetUserInput = function(){
 		return document.getElementById("input_url").value;
-	},
-
-	// Wiper
-	ClearErrorLevel: function(){
-		this.SetErrorLevel(0);
-	},
-	ClearContextInfo: function(){
-		this.SetContextInfo("");
 	}
 }
 
 // Konnektor zur standardisierten Interaktion mit dem Remote-Server.
-// "Echte" Klasse, um statische Variablen nutzen zu können.
-// "Künstliches" Singleton. Object.freeze() würde die Nutzung statischer Variablen verhindern.
-class RemoteConnectorEnv {
+class RemoteConnector {
 	static requestString = "";
 	static lastString = "";
 	static lastRequest = 0;
 	static pendingRequest = false;
 
-	constructor(){
-		// ToDo: Singleton sicherstellen
-	}
-
 	// Setter
-	SetRequestString(userInput){ this.requestString = userInput; }
-	SetLastString(requestString){ this.lastString = requestString; }
-	SetLastRequest(timeStamp){ this.lastRequest = timeStamp; }
-	SetPendingRequest(isPending){ this.pendingRequest = isPending;}
+	SetRequestString(userInput){ this.requestString = userInput; };
+	SetLastString(requestString){ this.lastString = requestString; };
+	SetLastRequest(timeStamp){ this.lastRequest = timeStamp; };
+	SetPendingRequest(isPending){ this.pendingRequest = isPending;};
 
 	// Getter
-	GetRequestString(){ return this.requestString;}
-	GetLastString(){ return this.lastString;}
-	GetLastRequest(){ return this.lastRequest;}
-	hasPendingRequest(){ return this.pendingRequest;}
+	GetRequestString(){ return this.requestString;};
+	GetLastString(){ return this.lastString;};
+	GetLastRequest(){ return this.lastRequest;};
+	hasPendingRequest(){ return this.pendingRequest;};
 
 	// Der eigentliche Request
-	ServerRequest(){
+	ServerRequest = function(){
 		// Klasse nicht korrekt initialisiert
-		if (!RemoteConnector) { return; }
+		if (!rc) { return; }
 
 		// So könnte ein AJAX-Request aussehen:
 	    /**********************************************
@@ -178,56 +160,60 @@ class RemoteConnectorEnv {
 		let responseText = settings.serverResponseText[antwortNummer];
 
 		// In jedem Fall gibt es eine Antwort
-		RemoteConnector.SetLastRequest(Date.now());
-		RemoteConnector.SetLastString(RemoteConnector.GetRequestString());
-		RemoteConnector.SetPendingRequest(false);
+		rc.SetLastRequest(Date.now());
+		rc.SetLastString(rc.GetRequestString());
+		rc.SetPendingRequest(false);
 		return responseText;
 	}
-	Check(userInput){
+	Check = function(userInput){
 		// Klasse nicht korrekt initialisiert
-		if (!RemoteConnector) { return; }
+		if (!rc) { return; }
 
 		let currentRequest = Date.now();
-		let currentDelay = currentRequest - RemoteConnector.GetLastRequest();
+		let currentDelay = currentRequest - rc.GetLastRequest();
 
 		// Lemma: userInput ist bei Aufruf von Check() validiert
 		// Der alte userInput wird verworfen, er ist nicht mehr interessant
-		RemoteConnector.SetRequestString(userInput);
+		rc.SetRequestString(userInput);
 
 		// Ausführung abbrechen, wenn bereits ein Request angefordert ist
-		if (RemoteConnector.hasPendingRequest()) {	return;	}
+		if (rc.hasPendingRequest()) {	return;	}
 
 		// Ausführung abbrechen, wenn dieselbe URL zuletzt gesucht wurde
-		if (RemoteConnector.GetRequestString() == RemoteConnector.GetLastString()) { return; }
+		if (rc.GetRequestString() == rc.GetLastString()) { return; }
 
 		// Throttled Request
 		this.SetPendingRequest(true);
 		if (currentDelay < settings.checkDelay) {
 			setTimeout(function() {
-				let serverReply = RemoteConnector.ServerRequest();
-				InputLogic.Report(RemoteConnector.GetRequestString() + ": " + serverReply);
+				let serverReply = rc.ServerRequest();
+				il.Report(rc.GetRequestString() + ": " + serverReply);
 			}, settings.checkDelay);
 		} else {
-			let serverReply = RemoteConnector.ServerRequest();
-			InputLogic.Report(RemoteConnector.GetRequestString() + ": " + serverReply);
+			let serverReply = rc.ServerRequest();
+			il.Report(rc.GetRequestString() + ": " + serverReply);
 		}
 	}
 }
-// Singleton initialisieren
-const RemoteConnector = new RemoteConnectorEnv();
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Entry Point
+// Input Handler
 
-// Input Entry Point: InputHandler()
-function InputHandler() {
+// Klassen instanzieren
+const il = new InputLogic();
+const mh = new MessageHandler();
+const fc = new FrontendConnector();
+const rc = new RemoteConnector();
+
+// Entry Point: InputHandler()
+function InputHandler(){
 	// Vorarbeit: Bereinigte Benutzereingabe aus dem Frontend holen
-	let userInput = InputLogic.GetUserInput();
+	let userInput = fc.GetUserInput();
 
 	// Aufgabe 1: Clientseitige Validitätsprüfung
-	if (InputLogic.isValid(userInput)) {
+	if (il.isValid(userInput)) {
 
 		// Aufgabe 2: Remote request
-		InputLogic.Check(userInput);
-	};
+		il.Check(userInput);
+	}
 }
