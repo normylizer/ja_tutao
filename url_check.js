@@ -2,7 +2,7 @@
 // Thema: Inline URL Überprüfung in JavaScript
 // Datum: 2025-11-18
 //
-// Version: 0.1.2 [indev]
+// Version: 0.1.3 [indev]
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Init
@@ -117,26 +117,26 @@ class FrontendConnector {
 
 // Konnektor zur standardisierten Interaktion mit dem Remote-Server.
 class RemoteConnector {
-	static requestString = "";
-	static lastString = "";
-	static lastRequest = 0;
-	static pendingRequest = false;
+	static #requestStringField = "";
+	static #lastStringField = "";
+	static #lastRequestField = 0;
+	static #pendingRequestField = false;
 
 	// Setter
-	SetRequestString(userInput){ this.requestString = userInput; };
-	SetLastString(requestString){ this.lastString = requestString; };
-	SetLastRequest(timeStamp){ this.lastRequest = timeStamp; };
-	SetPendingRequest(isPending){ this.pendingRequest = isPending;};
+	set requestString(userInput){ this.requestStringField = userInput; };
+	set lastString(requestString){ this.lastStringField = requestString; };
+	set lastRequest(timeStamp){ this.lastRequestField = timeStamp; };
+	set pendingRequest(isPending){ this.pendingRequestField = isPending;};
 
 	// Getter
-	GetRequestString(){ return this.requestString;};
-	GetLastString(){ return this.lastString;};
-	GetLastRequest(){ return this.lastRequest;};
-	hasPendingRequest(){ return this.pendingRequest;};
+	get requestString(){ return this.requestStringField;};
+	get lastString(){ return this.lastStringField;};
+	get lastRequest(){ return this.lastRequestField;};
+	get pendingRequest(){ return this.pendingRequestField;};
 
 	// Der eigentliche Request
 	ServerRequest = function(){
-		// Klasse nicht korrekt initialisiert
+		// Abbruchbedingung: Klasse nicht korrekt initialisiert
 		if (!rc) { return; }
 
 		// So könnte ein AJAX-Request aussehen:
@@ -160,38 +160,38 @@ class RemoteConnector {
 		let responseText = settings.serverResponseText[antwortNummer];
 
 		// In jedem Fall gibt es eine Antwort
-		rc.SetLastRequest(Date.now());
-		rc.SetLastString(rc.GetRequestString());
-		rc.SetPendingRequest(false);
+		rc.lastRequest = Date.now();
+		rc.lastString = rc.requestString;
+		rc.pendingRequest = false;
 		return responseText;
 	}
 	Check = function(userInput){
-		// Klasse nicht korrekt initialisiert
+		// Abbruchbedingung: Klasse nicht korrekt initialisiert
 		if (!rc) { return; }
 
 		let currentRequest = Date.now();
-		let currentDelay = currentRequest - rc.GetLastRequest();
+		let currentDelay = currentRequest - rc.lastRequest;
 
 		// Lemma: userInput ist bei Aufruf von Check() validiert
 		// Der alte userInput wird verworfen, er ist nicht mehr interessant
-		rc.SetRequestString(userInput);
+		rc.requestString = userInput;
 
 		// Ausführung abbrechen, wenn bereits ein Request angefordert ist
-		if (rc.hasPendingRequest()) {	return;	}
+		if (rc.pendingRequest) { return; }
 
 		// Ausführung abbrechen, wenn dieselbe URL zuletzt gesucht wurde
-		if (rc.GetRequestString() == rc.GetLastString()) { return; }
+		if (rc.requestString == rc.lastString) { return; }
 
 		// Throttled Request
-		this.SetPendingRequest(true);
+		this.pendingRequest = true;
 		if (currentDelay < settings.checkDelay) {
 			setTimeout(function() {
 				let serverReply = rc.ServerRequest();
-				il.Report(rc.GetRequestString() + ": " + serverReply);
+				il.Report(rc.requestString + ": " + serverReply);
 			}, settings.checkDelay);
 		} else {
 			let serverReply = rc.ServerRequest();
-			il.Report(rc.GetRequestString() + ": " + serverReply);
+			il.Report(rc.requestString + ": " + serverReply);
 		}
 	}
 }
